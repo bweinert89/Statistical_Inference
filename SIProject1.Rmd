@@ -1,0 +1,115 @@
+---
+title: "Statistical Inference Course Project 1"
+author: "Ben Weinert"
+date: "March 12, 2016"
+output: html_document
+---
+#Project
+In this project you will investigate the exponential distribution in R and compare it with the Central Limit Theorem. The exponential distribution can be simulated in R with rexp(n, lambda) where lambda ($\lambda$) is the rate parameter. The mean of exponential distribution is 1/lambda and the standard deviation is also 1/lambda. Set lambda = 0.2 for all of the simulations. You will investigate the distribution of averages of 40 exponential. Note that you will need to do a thousand simulations.
+
+
+##Creating the Dataset
+
+
+```{r}
+#Set the seed
+set.seed(123)
+
+#Set lambda
+lambda<-0.2
+
+#Set number of Observations
+obvs<-40
+
+#Set number of simulations
+sim<-1000
+
+#simulate
+simexp<-matrix(rexp(sim*obvs,rate=lambda),nrow=sim,ncol=obvs)
+
+#create vector of means
+mean_simexp<-apply(simexp,1,mean)
+```
+
+##Question 1
+Show where the distribution is centered at and compare it to the theoretical center of the distribution.
+
+```{r}
+#Calculate analytical mean
+anmean<-mean(mean_simexp)
+anmean
+```
+
+```{r}
+#Calculate theoretical mean
+thmean<-1/lambda
+thmean
+```
+
+```{r}
+#plot the means
+hist(mean_simexp,xlab="mean",main="Exponential Function Simulation")
+abline(v=anmean,col="blue")
+abline(v=thmean,col="red")
+```
+
+A simulation was created with 40 observations and a rate of $\lambda$=2. The sample mean was found to be $\bar{X}$=5.011911.  The theoretical mean is $1/\lambda$ = 5.  The center of the means distribution is very close to the theoretical mean.
+
+##Question 2
+Show how variable it is and compare it to the theoretical variance of the distribution.
+
+```{r}
+#Standard deviation of data
+sd_data<-sd(mean_simexp)
+sd_data
+```
+
+```{r}
+#Variance deviation of data
+var_data<-sd_data^2
+var_data
+```
+
+```{r}
+#Standard deviation of theory
+sd_theory<-(1/lambda)/sqrt(obvs)
+sd_theory
+```
+
+```{r}
+#Variance deviation of theory
+var_th<-sd_theory^2
+var_th
+```
+
+The standard deviation of the data was 0.7802751, and the theoretical standard deviation was $\frac{1}{\lambda\sqrt{n}}$=0.7905694.  The variance is the square of the standard deviation.  For the data the variance is 0.6088292 and for the theory it is 0.625.
+
+
+##Question 3
+Show that the distribution is approximately normal.
+
+```{r}
+#Plot the distribution, and show the mean/density of the data (blue)
+#and the mean of and normal density of the theory(red)
+library(ggplot2)
+ggplot(data.frame(mean_simexp),aes(x=mean_simexp)) + 
+        geom_histogram(aes(y=..density..),col="black",fill="orange",bins=40) + 
+        geom_vline(xintercept=c(anmean,thmean),col=c("blue","red")) +     
+        stat_function(fun=dnorm, args=list(mean=thmean,sd=sd_theory),aes(color="Theory")) +
+        geom_density(aes(color="Data")) + 
+        ggtitle(expression(paste("Simulation of Exponential means with ",lambda,"=0.2"))) +
+        xlab("Mean") + 
+        scale_color_manual(name=" ",values=c("Theory"="red","Data"="blue"))
+```
+
+```{r}
+#Compare the the quantiles of the distribution of averages of 40 exponentials
+#to the normal distribution (red line)
+qqnorm(mean_simexp)
+qqline(mean_simexp,col="red")
+```
+
+The Normal Q-Q plot shows the quantiles (x-axis) for the value mean (y-axis) for a normal distribution.  The red line is the theoretical quantiles for a normal distributions, and the circles are the data distribution.  For most of the length of the distribution, the data is very close to the normal distribution.
+
+
+Because of the large number of observations in each simulation, the distribution of averages of the exponential approaches the normal distribution due to the Central Limit Theorem (CLT).

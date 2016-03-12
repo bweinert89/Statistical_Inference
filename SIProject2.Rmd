@@ -1,0 +1,129 @@
+---
+title: "Statistical Inference Course Project 2"
+author: "Ben Weinert"
+date: "March 12, 2016"
+output: html_document
+---
+#Project
+
+This report is for second part of the course project of the Coursera course "Statistical Inference" which is a part of specialization "Data Science". In this second part, we perform basic inferential analyses using the ToothGrowth data in the R datasets package.
+
+As per the help file of this dataset, the response is the length of odontoblasts (teeth) in each of 10 guinea pigs at each of three dose levels of Vitamin C (0.5, 1, and 2 mg) with each of two delivery methods (orange juice or ascorbic acid).
+
+##Loading and Viewing the Dataset
+```{r}
+#Load the Dataset
+library(ggplot2)
+library(datasets)
+data(ToothGrowth)
+
+#View the contents
+str(ToothGrowth)
+```
+
+```{r}
+head(ToothGrowth)
+```
+
+```{r}
+#Change dose from numeric to factor
+ToothGrowth$dose<-as.factor(ToothGrowth$dose)
+```
+##Summarize the data
+```{r}
+summary(ToothGrowth)
+```
+
+```{r}
+table(ToothGrowth$dose,ToothGrowth$supp)
+```
+
+##Perform a basic exploratory analysis
+```{r}
+#Check the mean of the two supplements
+DataSupp<-split(ToothGrowth$len, ToothGrowth$supp)
+sapply(DataSupp, mean)
+```
+
+There is a difference in the mean length for the supplements.  Now check the overlap of the supplements using a graph.
+
+```{r}
+#make a plot of length vs supplement
+ggplot(aes(x=supp,y=len),data=ToothGrowth) + 
+        geom_boxplot(aes(fill=supp)) + 
+        xlab("Supplement") +  
+        ylab("Tooth Length") + 
+        ggtitle("Tooth Length vs. Supplement")
+```
+
+There does not appear to be a large difference in tooth length for the two supplements due to the large overlap.  A more in depth analysis using confidence intervals is necessary.
+
+
+```{r}
+#Check the mean of the three doses
+DataDose<-split(ToothGrowth$len, ToothGrowth$dose)
+sapply(DataDose, mean)
+```
+
+The mean of the tooth length is increasing with the dose.  Now check the observations vs dose with a graph.
+
+```{r}
+#make a plot of length vs dose
+ggplot(aes(x=dose,y=len),data=ToothGrowth) + 
+        geom_boxplot(aes(fill=dose)) + 
+        xlab("Dose (mg)") +  
+        ylab("Tooth Length") + 
+        ggtitle("Tooth Length vs. Dose")
+```
+
+The distribution of the tooth length appears to increase with dosage in this quick exploratory analysis.
+
+Finally make a graph splitting the data into dosage and supplement
+```{r}
+#make a plot of length vs dose
+ggplot(aes(x=dose,y=len),data=ToothGrowth) + 
+        geom_boxplot(aes(fill=dose)) + 
+        facet_grid(.~supp) + 
+        xlab("Dose (mg)") +  
+        ylab("Tooth Length") + 
+        ggtitle("Tooth Length vs. Dose")
+```
+
+The trend with dosage is seen for both supplements.
+
+##Perform Statistcal Inference Tests
+Now we will use t test to determine if either the supplement or dosage has an affect on the tooth length.  First we will look at the supplement.
+
+```{r}
+t.test(len~supp,data=ToothGrowth)
+```
+
+The 95% confidence interval for the t test includes zero.  This means that we can not reject the null hypothesis, that the supplement has no affect on the tooth length.  Additionally the p value is about 6.1%, which is greater than the 5% used in most significance tests.
+
+Now we will test to see if there is an affect on the the tooth length due to the dosage.  To do this we will test the three dosages in pairs to see if they are the same.  In doing this we assume the data is not paired, and the variances are equal.
+
+```{r}
+#Compare 1mg dosage to 0.5mg to see if they are the same
+t.test(ToothGrowth$len[ToothGrowth$dose==1],ToothGrowth$len[ToothGrowth$dose==0.5],paired=FALSE,var.equal=TRUE)
+
+```
+
+```{r}
+#Compare 2mg dosage to 0.5mg to see if they are the same
+t.test(ToothGrowth$len[ToothGrowth$dose==2],ToothGrowth$len[ToothGrowth$dose==0.5],paired=FALSE,var.equal=TRUE)
+
+```
+
+```{r}
+#Compare 2mg dosage to 1mg to see if they are the same
+t.test(ToothGrowth$len[ToothGrowth$dose==2],ToothGrowth$len[ToothGrowth$dose==1],paired=FALSE,var.equal=TRUE)
+
+```
+
+For all three of the dosage pairs, the 95% confidence level does not contain zero.  The p value is also orders of magnitude below 5% for each pair.  This means that the tooth length is not the same for the dosages, and as we saw with the boxplots the length increases with dosage.  Therefore we can reject the null hypothesis and establish that the tooth length increases with dosage.
+
+##Summary and Assumptions
+
+In creating these tests, a few assumptions were made.  It is assumed that there was a random assignment of supplement and dosage to each of the guinea pigs, and that this sample population is representative of the total (although we did not perform a power test as we did not create this sample).  For the t tests, it was assumed that the groups were not paired, and that the variances were equal.
+
+We can make two conclusions from the exploratory analysis and statistical inference tests. The first is that the supplement has no affect on the tooth length.  The second is that the tooth length of the guinea pigs increases with the dosage.
